@@ -7,13 +7,13 @@ public class ServidorViajesRMI {
 
     public static void main(String args[]) {
         try{
-            startRegistry(1234);
+            startRegistry(1099);
             ImpServidorViajes exportedObj = new ImpServidorViajes(); //Instancia creada
-            String registryURL = "rmi://localhost:1099/callback";
+            String registryURL = "rmi://localhost:1099/rmi";
             Naming.rebind(registryURL, exportedObj);
-            System.out.println("Callback Server ready.");
+            System.out.println("RMI Server ready.");
         } catch (Exception re) {
-            System.out.println("Exception in HelloServer.main: " + re);
+            System.out.println("Exception in ServidorViajesRMI.main: " + re);
         } // end catch
     } // end main
     //This method starts a RMI registry on the local host, if

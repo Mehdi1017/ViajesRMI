@@ -9,6 +9,7 @@ import java.io.IOException;
 import java.rmi.RemoteException;
 
 public interface IntServidorViajes {
+    public void guardaDatos();
     public JSONArray consultaViajes(String origen) throws RemoteException, IOException, ParseException;
     public JSONObject reservaViaje(String codviaje, String codcli) throws RemoteException, IOException, ParseException;
     public JSONObject anulaReserva(String codviaje, String codcli) throws RemoteException, IOException, ParseException;
