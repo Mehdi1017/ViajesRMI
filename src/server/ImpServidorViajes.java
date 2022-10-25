@@ -17,6 +17,11 @@ public class ImpServidorViajes extends UnicastRemoteObject implements IntServido
     }
 
     @Override
+    public void guardaDatos() {
+
+    }
+
+    @Override
     public JSONArray consultaViajes(String origen) throws RemoteException, IOException, ParseException {
         return null;
     }
