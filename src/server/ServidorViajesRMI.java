@@ -2,6 +2,8 @@ package server;
 
 import java.rmi.Naming;
 import java.rmi.RemoteException;
+import java.rmi.registry.LocateRegistry;
+import java.rmi.registry.Registry;
 
 public class ServidorViajesRMI {
 
@@ -19,7 +21,12 @@ public class ServidorViajesRMI {
     //This method starts a RMI registry on the local host, if
     //it does not already exists at the specified port number.
     private static void startRegistry(int RMIPortNum) throws RemoteException {
-        // Known code from the book of Liu is here
+        try {
+            Registry registro = LocateRegistry.getRegistry(RMIPortNum);
+            registro.list();
+        } catch (RemoteException e) {
+            Registry registro = LocateRegistry.createRegistry(RMIPortNum);
+        }
     } // end startRegistry
 
 
