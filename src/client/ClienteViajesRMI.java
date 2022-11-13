@@ -1,6 +1,7 @@
 package client;
 
 import common.HelloInterface;
+import common.IntCallbackCliente;
 import common.IntServidorViajes;
 import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
@@ -36,10 +37,12 @@ public class ClienteViajesRMI {
         System.out.println("3. Anular una reserva");
         System.out.println("4. Ofertar un viaje");
         System.out.println("5. Borrar un viaje");
+        System.out.println("6. Registrar notificacion");
+        System.out.println("7. Borrar notificacion");
         do {
-            System.out.print("\nElige una opcion (0..5): ");
+            System.out.print("\nElige una opcion (0..7): ");
             opcion = teclado.nextInt();
-        } while ( (opcion<0) || (opcion>5) );
+        } while ( (opcion<0) || (opcion>7) );
         teclado.nextLine(); // Elimina retorno de carro del buffer de entrada
         return opcion;
     }
@@ -57,6 +60,7 @@ public class ClienteViajesRMI {
 
             String registryURL = "rmi://" + hostName + ":" + RMIPortNum + "/rmi";
             IntServidorViajes h = (IntServidorViajes) Naming.lookup(registryURL);
+            IntCallbackCliente objCliente = new ImpCallbackCliente();
             System.out.println("Lookup completed ");
             Scanner teclado = new Scanner(System.in);
 
@@ -147,6 +151,20 @@ public class ClienteViajesRMI {
                         }
                         System.out.print("Viaje borrado con exito");
                         break;
+                    }
+
+                    case 6: {
+                        System.out.println("Introduzca origen del viaje");
+                        String origen = teclado.next();
+                        h.registrarNotificacion(origen, objCliente);
+                        System.out.println("Nueva notificacion creada");
+                    }
+
+                    case 7: {
+                        System.out.println("Introduce origen del viaje");
+                        String origen = teclado.next();
+                        h.borrarNotificacion(origen, objCliente);
+                        System.out.println("Notificacion borrada");
                     }
 
                 } // fin switch

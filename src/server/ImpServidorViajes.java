@@ -1,5 +1,6 @@
 package server;
 
+import common.IntCallbackCliente;
 import common.IntServidorViajes;
 import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
@@ -16,6 +17,7 @@ import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
 import java.time.format.DateTimeParseException;
 import java.util.HashMap;
+import java.util.Vector;
 
 public class ImpServidorViajes extends UnicastRemoteObject implements IntServidorViajes {
     private static FileWriter os;			// stream para escribir los datos en el fichero
@@ -25,6 +27,7 @@ public class ImpServidorViajes extends UnicastRemoteObject implements IntServido
      * 	La clave es el codigo único del viaje.
      */
     private static HashMap<String, Viaje> mapa;
+    private static HashMap<String, Vector<IntCallbackCliente>> notificaciones;
 
     /**
      * Constructor del gestor de viajes
@@ -32,6 +35,7 @@ public class ImpServidorViajes extends UnicastRemoteObject implements IntServido
      */
     protected ImpServidorViajes() throws RemoteException {
         mapa =  new HashMap<String, Viaje>();
+        notificaciones = new HashMap<String, Vector<IntCallbackCliente>>();
         File file = new File("viajes.json");
         try {
             if (!file.exists() ) {
@@ -65,7 +69,7 @@ public class ImpServidorViajes extends UnicastRemoteObject implements IntServido
      *
      * @param os	stream de escritura asociado al fichero de datos
      */
-    private void escribeFichero(FileWriter os) throws IOException {
+    private synchronized void escribeFichero(FileWriter os) throws IOException {
 
         JSONArray datos = new JSONArray();
 
@@ -103,7 +107,7 @@ public class ImpServidorViajes extends UnicastRemoteObject implements IntServido
      *
      * @param is	stream de lectura de los datos del fichero
      */
-    private void leeFichero(FileReader is) {
+    private synchronized void leeFichero(FileReader is) {
         JSONParser parser = new JSONParser();
         try {
             // Leemos toda la información del fichero en un array de objetos JSON
@@ -121,7 +125,7 @@ public class ImpServidorViajes extends UnicastRemoteObject implements IntServido
      *
      * @param array	JSONArray con los datos de los Viajes
      */
-    private void rellenaDiccionario(JSONArray array) {
+    private synchronized void rellenaDiccionario(JSONArray array) {
         for (Object o : array) {
             JSONObject obj = (JSONObject) o;
             Viaje v = new Viaje(obj);
@@ -136,7 +140,7 @@ public class ImpServidorViajes extends UnicastRemoteObject implements IntServido
      * @return JSONArray de viajes con un origen dado. Vacío si no hay viajes disponibles con ese origen
      */
     @Override
-    public JSONArray consultaViajes(String origen) {
+    public synchronized JSONArray consultaViajes(String origen) {
 
         JSONArray viajesDestino = new JSONArray();
 
@@ -155,7 +159,7 @@ public class ImpServidorViajes extends UnicastRemoteObject implements IntServido
 
 
     @Override
-    public JSONObject reservaViaje(String codviaje, String codcli) {
+    public synchronized JSONObject reservaViaje(String codviaje, String codcli) {
 
         if (this.mapa.containsKey(codviaje)) {
 
@@ -186,7 +190,7 @@ public class ImpServidorViajes extends UnicastRemoteObject implements IntServido
     }
 
     @Override
-    public JSONObject anulaReserva(String codviaje, String codcli) { //COMPLETADO
+    public synchronized JSONObject anulaReserva(String codviaje, String codcli) { //COMPLETADO
 
         if (mapa.containsKey(codviaje)) {
 
@@ -224,7 +228,7 @@ public class ImpServidorViajes extends UnicastRemoteObject implements IntServido
     }
 
     @Override
-    public JSONObject ofertaViaje(String codcli, String origen, String destino, String fecha, long precio, long numplazas) { //COMPLETADO
+    public synchronized JSONObject ofertaViaje(String codcli, String origen, String destino, String fecha, long precio, long numplazas) { //COMPLETADO
         if (es_fecha_valida(fecha)){
             Viaje nuevo = new Viaje(codcli,origen,destino,fecha,precio,numplazas);
             mapa.put(nuevo.getCodviaje(),nuevo);
@@ -234,7 +238,7 @@ public class ImpServidorViajes extends UnicastRemoteObject implements IntServido
     }
 
     @Override
-    public JSONObject borraViaje(String codviaje, String codcli) { //COMPLETADO
+    public synchronized JSONObject borraViaje(String codviaje, String codcli) { //COMPLETADO
 
         if (this.mapa.containsKey(codviaje)) {
             Viaje v = this.mapa.get(codviaje);
@@ -252,5 +256,17 @@ public class ImpServidorViajes extends UnicastRemoteObject implements IntServido
             return new JSONObject();
 
         }
+    }
+
+    @Override
+    public synchronized void registrarNotificacion(String origen, IntCallbackCliente cliente) throws RemoteException, IOException, ParseException{
+        if (!notificaciones.get(origen).contains(cliente)){
+            notificaciones.get(origen).add(cliente);
+        }
+    }
+
+    @Override
+    public synchronized void borrarNotificacion(String origen, IntCallbackCliente cliente) throws RemoteException, IOException, ParseException{
+        notificaciones.get(origen).remove(cliente);
     }
 }
