@@ -169,8 +169,7 @@ public class ClienteViajesRMI {
                         boolean borrada = false;
                         if (objCliente != null)
                             borrada = h.borrarNotificacion(origen, objCliente);
-                        else
-                            System.out.println("No existe ninguna notificación");
+
                         if (borrada)
                             System.out.println("Notificacion borrada");
                         else

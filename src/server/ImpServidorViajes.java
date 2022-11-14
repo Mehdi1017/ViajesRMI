@@ -135,9 +135,7 @@ public class ImpServidorViajes extends UnicastRemoteObject implements IntServido
             JSONObject obj = (JSONObject) o;
             Viaje v = new Viaje(obj);
             this.mapa.put(v.getCodviaje(),v);
-            if (!notificaciones.containsKey(v.getOrigen())) {
-                notificaciones.put(v.getOrigen(),new Vector<>());
-            }
+
         }
     }
 
@@ -249,15 +247,16 @@ public class ImpServidorViajes extends UnicastRemoteObject implements IntServido
     private synchronized void notificaViajeOrigen(Viaje viaje) throws RemoteException {
         System.out.println("*********\nNotificación del sistema ---");
         String origen = viaje.getOrigen();
-        Vector<IntCallbackCliente> clientesNotifica = notificaciones.get(origen);
-        for (int i = clientesNotifica.size() - 1; i >= 0; i--) {
-            try {
-                clientesNotifica.get(i).notificame("\n\n***Se ha ofertado un nuevo viaje con origen en " + viaje.getOrigen() + ": \n" + viaje);
-            } catch (RemoteException e) {
-                System.out.println("Se ha detectado un cliente inactivo. Procediendo a eliminarlo del sistema de notificación...");
-                borrarNotificacion(origen, clientesNotifica.get(i));
+        if (notificaciones.containsKey(origen)) {
+            Vector<IntCallbackCliente> clientesNotifica = notificaciones.get(origen);
+            for (int i = clientesNotifica.size() - 1; i >= 0; i--) {
+                try {
+                    clientesNotifica.get(i).notificame("\n\n***Se ha ofertado un nuevo viaje con origen en " + viaje.getOrigen() + ": \n" + viaje);
+                } catch (RemoteException e) {
+                    System.out.println("Se ha detectado un cliente inactivo. Procediendo a eliminarlo del sistema de notificación...");
+                    borrarNotificacion(origen, clientesNotifica.get(i));
+                }
             }
-
         }
     }
 
@@ -296,9 +295,11 @@ public class ImpServidorViajes extends UnicastRemoteObject implements IntServido
 
     @Override
     public synchronized boolean borrarNotificacion(String origen, IntCallbackCliente cliente) throws RemoteException{
-        if (notificaciones.get(origen).contains(cliente)) {
-            notificaciones.get(origen).remove(cliente);
-            return true;
+        if (notificaciones.containsKey(origen)) {
+            if (notificaciones.get(origen).contains(cliente)) {
+                notificaciones.get(origen).remove(cliente);
+                return true;
+            }
         }
         return false;
     }
