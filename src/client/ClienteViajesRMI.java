@@ -10,6 +10,7 @@ import java.net.MalformedURLException;
 import java.rmi.Naming;
 import java.rmi.NotBoundException;
 import java.rmi.RemoteException;
+import java.rmi.server.UnicastRemoteObject;
 import java.util.Iterator;
 import java.util.Scanner;
 
@@ -76,7 +77,8 @@ public class ClienteViajesRMI {
                         h.guardaDatos(objCliente);
                         opcion = 0;
                         System.out.println("Sesión Cerrada...");
-                        System.exit(0);
+                        UnicastRemoteObject.unexportObject(objCliente, true);
+                        break;
 
                     case 1: { // Consultar viajes con un origen dado
                         System.out.print("Introduce origen: ");
