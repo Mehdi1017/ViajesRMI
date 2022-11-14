@@ -54,7 +54,7 @@ public class ImpServidorViajes extends UnicastRemoteObject implements IntServido
         }
     }
     @Override
-    public void guardaDatos(){
+    public void guardaDatos() throws RemoteException{
         File file = new File("viajes.json");
         try {
             os = new FileWriter(file);
@@ -88,15 +88,19 @@ public class ImpServidorViajes extends UnicastRemoteObject implements IntServido
 
         Viaje viaje = new Viaje("pedro", "Castellón", "Alicante", "28-05-2023", 16, 1);
         mapa.put(viaje.getCodviaje(), viaje);
+        notificaciones.put(viaje.getOrigen(),new Vector<>());
 
         viaje = new Viaje("pedro", "Alicante", "Castellón", "29-05-2023", 16, 1);
         mapa.put(viaje.getCodviaje(), viaje);
+        notificaciones.put(viaje.getOrigen(),new Vector<>());
 
         viaje = new Viaje("maria", "Madrid", "Valencia", "07-06-2023", 7, 2);
         mapa.put(viaje.getCodviaje(), viaje);
+        notificaciones.put(viaje.getOrigen(),new Vector<>());
 
         viaje = new Viaje("carmen", "Sevilla", "Barcelona", "12-08-2023", 64, 1);
         mapa.put(viaje.getCodviaje(), viaje);
+        notificaciones.put(viaje.getOrigen(),new Vector<>());
 
         viaje = new Viaje("juan", "Castellón", "Cordoba", "07-11-2023", 39, 3);
         mapa.put(viaje.getCodviaje(), viaje);
@@ -130,6 +134,9 @@ public class ImpServidorViajes extends UnicastRemoteObject implements IntServido
             JSONObject obj = (JSONObject) o;
             Viaje v = new Viaje(obj);
             this.mapa.put(v.getCodviaje(),v);
+            if (!notificaciones.containsKey(v.getOrigen())) {
+                notificaciones.put(v.getOrigen(),new Vector<>());
+            }
         }
     }
 
@@ -228,13 +235,32 @@ public class ImpServidorViajes extends UnicastRemoteObject implements IntServido
     }
 
     @Override
-    public synchronized JSONObject ofertaViaje(String codcli, String origen, String destino, String fecha, long precio, long numplazas) { //COMPLETADO
+    public synchronized JSONObject ofertaViaje(String codcli, String origen, String destino, String fecha, long precio, long numplazas) throws RemoteException { //COMPLETADO
         if (es_fecha_valida(fecha)){
             Viaje nuevo = new Viaje(codcli,origen,destino,fecha,precio,numplazas);
+            if (!notificaciones.containsKey(nuevo.getOrigen())) {
+                notificaciones.put(nuevo.getOrigen(),new Vector<>());
+            }
             mapa.put(nuevo.getCodviaje(),nuevo);
+            notificaViajeOrigen(nuevo);
             return nuevo.toJSON();
         }
         return new JSONObject();
+    }
+
+    private synchronized void notificaViajeOrigen(Viaje viaje) throws RemoteException {
+        System.out.println("*********\nNotificación del sistema ---");
+        String origen = viaje.getOrigen();
+        Vector<IntCallbackCliente> clientesNotifica = notificaciones.get(origen);
+        for (int i = clientesNotifica.size() - 1; i >= 0; i--) {
+            try {
+                clientesNotifica.get(i).notificame("\n\n***Se ha ofertado un nuevo viaje con origen en " + viaje.getOrigen() + ": \n" + viaje);
+            } catch (RemoteException e) {
+                System.out.println("Se ha detectado un cliente inactivo. Procediendo a eliminarlo del sistema de notificación...");
+                notificaciones.get(origen).remove(clientesNotifica.get(i));
+            }
+
+        }
     }
 
     @Override

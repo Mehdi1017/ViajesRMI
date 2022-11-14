@@ -154,17 +154,19 @@ public class ClienteViajesRMI {
                     }
 
                     case 6: {
-                        System.out.println("Introduzca origen del viaje");
+                        System.out.println("Introduzca origen del viaje: ");
                         String origen = teclado.next();
                         h.registrarNotificacion(origen, objCliente);
                         System.out.println("Nueva notificacion creada");
+                        break;
                     }
 
                     case 7: {
-                        System.out.println("Introduce origen del viaje");
+                        System.out.println("Introduce origen del viaje: ");
                         String origen = teclado.next();
                         h.borrarNotificacion(origen, objCliente);
                         System.out.println("Notificacion borrada");
+                        break;
                     }
 
                 } // fin switch
