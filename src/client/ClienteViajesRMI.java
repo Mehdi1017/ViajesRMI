@@ -60,7 +60,7 @@ public class ClienteViajesRMI {
 
             String registryURL = "rmi://" + hostName + ":" + RMIPortNum + "/rmi";
             IntServidorViajes h = (IntServidorViajes) Naming.lookup(registryURL);
-            IntCallbackCliente objCliente = new ImpCallbackCliente();
+            IntCallbackCliente objCliente = null;
             System.out.println("Lookup completed ");
             Scanner teclado = new Scanner(System.in);
 
@@ -73,13 +73,14 @@ public class ClienteViajesRMI {
                 opcion = menu(teclado);
                 switch (opcion) {
                     case 0: // Guardar los datos en el fichero y salir del programa
-                        h.guardaDatos();
+                        h.guardaDatos(objCliente);
                         opcion = 0;
-                        break;
+                        System.out.println("Sesión Cerrada...");
+                        System.exit(0);
 
                     case 1: { // Consultar viajes con un origen dado
                         System.out.print("Introduce origen: ");
-                        String origen = teclado.nextLine();
+                        String origen = teclado.nextLine().toLowerCase();
                         JSONArray viajes = h.consultaViajes(origen);
                         if (viajes.isEmpty()) {
                             System.out.print("No se han encontrado viajes de este origen: ");
@@ -122,7 +123,7 @@ public class ClienteViajesRMI {
 
                     case 4: { // Ofertar un viaje
                         System.out.print("Introduzca origen: ");
-                        String origen = teclado.next();
+                        String origen = teclado.next().toLowerCase();
                         System.out.print("Introduzca destino: ");
                         String destino = teclado.next();
                         System.out.print("Introduzca fecha del viaje: ");
@@ -155,7 +156,8 @@ public class ClienteViajesRMI {
 
                     case 6: {
                         System.out.println("Introduzca origen del viaje: ");
-                        String origen = teclado.next();
+                        String origen = teclado.next().toLowerCase();
+                        objCliente = new ImpCallbackCliente();
                         h.registrarNotificacion(origen, objCliente);
                         System.out.println("Nueva notificacion creada");
                         break;
@@ -163,9 +165,16 @@ public class ClienteViajesRMI {
 
                     case 7: {
                         System.out.println("Introduce origen del viaje: ");
-                        String origen = teclado.next();
-                        h.borrarNotificacion(origen, objCliente);
-                        System.out.println("Notificacion borrada");
+                        String origen = teclado.next().toLowerCase();
+                        boolean borrada = false;
+                        if (objCliente != null)
+                            borrada = h.borrarNotificacion(origen, objCliente);
+                        else
+                            System.out.println("No existe ninguna notificación");
+                        if (borrada)
+                            System.out.println("Notificacion borrada");
+                        else
+                            System.out.println("No existe ninguna notificación para este origen");
                         break;
                     }
 

@@ -54,12 +54,17 @@ public class ImpServidorViajes extends UnicastRemoteObject implements IntServido
         }
     }
     @Override
-    public void guardaDatos() throws RemoteException{
+    public synchronized void guardaDatos(IntCallbackCliente cliente) throws RemoteException{
         File file = new File("viajes.json");
         try {
             os = new FileWriter(file);
             escribeFichero(os);
             os.close();
+            if (cliente != null) {
+                for (String origen : notificaciones.keySet()) {
+                    notificaciones.get(origen).remove(cliente);
+                }
+            }
         } catch (IOException e) {
             e.printStackTrace();
         }
@@ -86,23 +91,19 @@ public class ImpServidorViajes extends UnicastRemoteObject implements IntServido
      */
     private void generaDatos() {
 
-        Viaje viaje = new Viaje("pedro", "Castellón", "Alicante", "28-05-2023", 16, 1);
+        Viaje viaje = new Viaje("pedro", "castellón", "alicante", "28-05-2023", 16, 1);
         mapa.put(viaje.getCodviaje(), viaje);
-        notificaciones.put(viaje.getOrigen(),new Vector<>());
 
-        viaje = new Viaje("pedro", "Alicante", "Castellón", "29-05-2023", 16, 1);
+        viaje = new Viaje("pedro", "alicante", "castellón", "29-05-2023", 16, 1);
         mapa.put(viaje.getCodviaje(), viaje);
-        notificaciones.put(viaje.getOrigen(),new Vector<>());
 
-        viaje = new Viaje("maria", "Madrid", "Valencia", "07-06-2023", 7, 2);
+        viaje = new Viaje("maria", "madrid", "valencia", "07-06-2023", 7, 2);
         mapa.put(viaje.getCodviaje(), viaje);
-        notificaciones.put(viaje.getOrigen(),new Vector<>());
 
-        viaje = new Viaje("carmen", "Sevilla", "Barcelona", "12-08-2023", 64, 1);
+        viaje = new Viaje("carmen", "sevilla", "barcelona", "12-08-2023", 64, 1);
         mapa.put(viaje.getCodviaje(), viaje);
-        notificaciones.put(viaje.getOrigen(),new Vector<>());
 
-        viaje = new Viaje("juan", "Castellón", "Cordoba", "07-11-2023", 39, 3);
+        viaje = new Viaje("juan", "castellón", "cordoba", "07-11-2023", 39, 3);
         mapa.put(viaje.getCodviaje(), viaje);
 
     }
@@ -238,9 +239,6 @@ public class ImpServidorViajes extends UnicastRemoteObject implements IntServido
     public synchronized JSONObject ofertaViaje(String codcli, String origen, String destino, String fecha, long precio, long numplazas) throws RemoteException { //COMPLETADO
         if (es_fecha_valida(fecha)){
             Viaje nuevo = new Viaje(codcli,origen,destino,fecha,precio,numplazas);
-            if (!notificaciones.containsKey(nuevo.getOrigen())) {
-                notificaciones.put(nuevo.getOrigen(),new Vector<>());
-            }
             mapa.put(nuevo.getCodviaje(),nuevo);
             notificaViajeOrigen(nuevo);
             return nuevo.toJSON();
@@ -257,7 +255,7 @@ public class ImpServidorViajes extends UnicastRemoteObject implements IntServido
                 clientesNotifica.get(i).notificame("\n\n***Se ha ofertado un nuevo viaje con origen en " + viaje.getOrigen() + ": \n" + viaje);
             } catch (RemoteException e) {
                 System.out.println("Se ha detectado un cliente inactivo. Procediendo a eliminarlo del sistema de notificación...");
-                notificaciones.get(origen).remove(clientesNotifica.get(i));
+                borrarNotificacion(origen, clientesNotifica.get(i));
             }
 
         }
@@ -285,14 +283,23 @@ public class ImpServidorViajes extends UnicastRemoteObject implements IntServido
     }
 
     @Override
-    public synchronized void registrarNotificacion(String origen, IntCallbackCliente cliente) throws RemoteException, IOException, ParseException{
-        if (!notificaciones.get(origen).contains(cliente)){
+    public synchronized void registrarNotificacion(String origen, IntCallbackCliente cliente) throws RemoteException{
+        if (!notificaciones.containsKey(origen)){
+            Vector<IntCallbackCliente> v = new Vector<IntCallbackCliente>();
+            v.add(cliente);
+            notificaciones.put(origen, v);
+        }
+        else if (!notificaciones.get(origen).contains(cliente)){
             notificaciones.get(origen).add(cliente);
         }
     }
 
     @Override
-    public synchronized void borrarNotificacion(String origen, IntCallbackCliente cliente) throws RemoteException, IOException, ParseException{
-        notificaciones.get(origen).remove(cliente);
+    public synchronized boolean borrarNotificacion(String origen, IntCallbackCliente cliente) throws RemoteException{
+        if (notificaciones.get(origen).contains(cliente)) {
+            notificaciones.get(origen).remove(cliente);
+            return true;
+        }
+        return false;
     }
 }
